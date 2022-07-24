@@ -1,0 +1,53 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                      ; ...
+    14 00000000 01020304                    S1 db 1, 2, 3, 4
+    15                                      lung1 equ $-S1 ; lung1 = lungimea sirului S1
+    16 00000004 050607                      S2 db 5, 6, 7
+    17                                      lung2 equ $-S2 ; lung2 = lungimea sirului S2
+    18 00000007 00<rept>                    D times lung1+lung2 db 0 ; rezervam memorie(egala cu memoria ambelor siruri combinate) pentru D
+    19                                  
+    20                                  ; our code starts here
+    21                                  segment code use32 class=code
+    22                                      start:
+    23                                          ; ...
+    24 00000000 B904000000                      mov ecx , lung1 ; ecx = lung1
+    25 00000005 BE00000000                      mov esi , 0 ; un fel de pointer pentru S1
+    26 0000000A BF00000000                      mov edi , 0 ; un fel de pointer pentru D
+    27                                          
+    28                                          Repeta1:
+    29 0000000F 8A86[00000000]                      mov al , [S1 + esi] ; al = S1[esi]
+    30 00000015 8887[07000000]                      mov [D + edi], al   ; D[edi] = al
+    31 0000001B 47                                  inc edi ;edi++
+    32 0000001C 46                                  inc esi ;esi++
+    33 0000001D E2F0                            loop Repeta1
+    34                                          
+    35                                          ; sirul D devine :  1,2,3,4
+    36                                          
+    37                                          ; vom parcugre sirul S2 descrescator
+    38 0000001F BE02000000                      mov esi , lung2-1 ; un fel de pointer pentru S2
+    39 00000024 B903000000                      mov ecx , lung2 ; ecx = lung2
+    40                                          
+    41                                          
+    42                                          Repeta2:
+    43 00000029 8A86[04000000]                      mov al , [S2 + esi] ; al = S2[esi]
+    44 0000002F 8887[07000000]                      mov [D + edi], al   ; D[edi] = al
+    45 00000035 47                                  inc edi ;edi++
+    46 00000036 4E                                  dec esi ;esi--
+    47 00000037 E2F0                            loop Repeta2
+    48                                          
+    49                                          ; sirul D devine :  1,2,3,4,7,6,5
+    50                                          
+    51                                          ; exit(0)
+    52                                          ;push    dword 0      ; push the parameter for exit onto the stack
+    53 00000039 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

@@ -1,0 +1,68 @@
+     1                                  bits 32 
+     2                                  global start         
+     3                                  
+     4                                  extern exit, printf, scanf 
+     5                                  import exit msvcrt.dll 
+     6                                  import printf msvcrt.dll 
+     7                                  import scanf msvcrt.dll
+     8                                  
+     9                                  extern concat1 
+    10                                  
+    11                                  ;Se dau doua siruri continand caractere. Sa se calculeze si sa se afiseze rezultatul concatenarii tuturor ;caracterelor ;tip cifra zecimala din cel de-al doilea sir dupa cele din primul sir si invers, rezultatul ;co
+    12                                  
+    13                                  segment data use32 class=data public 
+    14 00000000 00<rept>                    Sir1 times 100 db 0
+    15 00000064 00<rept>                    Sir2 times 100 db 0
+    16 000000C8 257300                      format db "%s",0 ; ne ajuta la cirirea sirurilor de caractere
+    17 000000CB 00<rept>                    SirIesire1 times 200 db 0
+    18 00000193 00<rept>                    SirIesire2 times 200 db 0
+    19 0000025B 0A00                        endl db 10,0
+    20                                      
+    21                                  segment code use32 class=code public 
+    22                                      start: 
+    23                                          ; ...
+    24                                          ; Citire
+    25                                          
+    26                                          ;scanf("%s", Sir1)
+    27 00000000 68[00000000]                    push dword Sir1
+    28 00000005 68[C8000000]                    push dword format
+    29 0000000A FF15[00000000]                  call [scanf] ; apelam scanf
+    30 00000010 83C408                          add esp, 4 * 2 
+    31                                          
+    32                                          ;scanf("%s", Sir2)
+    33 00000013 68[64000000]                    push dword Sir2
+    34 00000018 68[C8000000]                    push dword format
+    35 0000001D FF15[00000000]                  call [scanf] ; apelam scanf
+    36 00000023 83C408                          add esp, 4 * 2 
+    37                                          
+    38                                          ; concat1(Sir1,Sir2,SirIesire1)
+    39 00000026 68[CB000000]                    push dword SirIesire1
+    40 0000002B 68[64000000]                    push dword Sir2
+    41 00000030 68[00000000]                    push dword Sir1
+    42 00000035 E8(00000000)                    call concat1
+    43 0000003A 83C40C                          add esp, 4 * 3 
+    44                                          
+    45                                          ; concat1(Sir1,Sir2,SirIesire2)
+    46 0000003D 68[93010000]                    push dword SirIesire2
+    47 00000042 68[00000000]                    push dword Sir1
+    48 00000047 68[64000000]                    push dword Sir2
+    49 0000004C E8(00000000)                    call concat1
+    50 00000051 83C40C                          add esp, 4 * 3 
+    51                                          
+    52                                          ; printf(SirIesire1)
+    53 00000054 68[CB000000]                    push dword SirIesire1
+    54 00000059 FF15[00000000]                  call [printf]
+    55 0000005F 83C404                          add esp, 4
+    56                                          
+    57                                          ; printf(endl)
+    58 00000062 68[5B020000]                    push dword endl
+    59 00000067 FF15[00000000]                  call [printf]
+    60 0000006D 83C404                          add esp, 4
+    61                                          
+    62                                          ; printf(SirIesire2)
+    63 00000070 68[93010000]                    push dword SirIesire2
+    64 00000075 FF15[00000000]                  call [printf]
+    65 0000007B 83C404                          add esp, 4
+    66                                  
+    67 0000007E 6A00                            push dword 0  
+    68 00000080 FF15[00000000]                  call [exit] 

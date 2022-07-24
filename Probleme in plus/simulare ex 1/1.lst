@@ -1,0 +1,158 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit, printf, fopen, fread          ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  import printf msvcrt.dll
+    11                                  import fopen msvcrt.dll
+    12                                  import fread msvcrt.dll
+    13                                  ; our data is declared here (the variables needed by our program)
+    14                                  segment data use32 class=data
+    15                                      ; ...
+    16 00000000 696E7075742E747874-         nume_fisier db "input.txt",0
+    16 00000009 00                 
+    17 0000000A 7200                        mod_aces db "r",0
+    18 0000000C FFFFFFFF                    descriptor_fis dd -1; aici vom salva descriptorul fisierului - necesar pt a putea face referire la fisier
+    19                                      len equ 100
+    20 00000010 00<rept>                    text times (len+1) db 0 ; +1 e pentru null
+    21 00000075 FF<rept>                    Sir_nou times len db -1
+    22 000000D9 00000000                    n dd 0
+    23 000000DD 00                          i db 0
+    24 000000DE 256400                      format db "%d",0
+    25 000000E1 0A00                        new_line db 10,0
+    26 000000E3 2000                        space db " ",0
+    27 000000E5 00000000                    aux dd 0
+    28                                      
+    29                                  ; our code starts here
+    30                                  segment code use32 class=code
+    31                                      start:
+    32                                          ; ...
+    33                                          ;fopen(nume_fisier, mod_aces)
+    34 00000000 68[0A000000]                    push dword mod_aces
+    35 00000005 68[00000000]                    push dword nume_fisier
+    36 0000000A FF15[00000000]                  call [fopen]
+    37 00000010 83C408                          add esp, 4*2 
+    38                                          
+    39 00000013 A3[0C000000]                    mov [descriptor_fis] , eax
+    40                                          
+    41                                          ;fread(text, 1, len, descriptor_fis)
+    42 00000018 FF35[0C000000]                  push dword [descriptor_fis]
+    43 0000001E 6A64                            push dword len
+    44 00000020 6A01                            push dword 1
+    45 00000022 68[10000000]                    push dword text
+    46 00000027 FF15[00000000]                  call [fread]
+    47 0000002D 83C410                          add esp, 4*4 
+    48                                          
+    49                                          ;; citim prima linie 
+    50 00000030 BE[10000000]                    mov esi , text
+    51                                          first_loop:
+    52 00000035 AC                                  lodsb ; al = [esi] , inc esi
+    53 00000036 3C0A                                cmp al , 10
+    54 00000038 7427                                    je out1
+    55 0000003A 3C30                                cmp al , '0'
+    56 0000003C 7C21                                    jl continue1
+    57 0000003E 3C39                                cmp al , '9'
+    58 00000040 7F1D                                    jg continue1
+    59                                              ; else
+    60 00000042 BB00000000                              mov ebx , 0
+    61 00000047 88C3                                    mov bl , al
+    62 00000049 80EB30                                  sub bl , '0'
+    63                                                  
+    64 0000004C A1[D9000000]                            mov eax , [n]
+    65 00000051 BA0A000000                              mov edx , 10
+    66 00000056 F7E2                                    mul edx ; edx:eax = n * 10 adica parctic doar eax fiindca n este int
+    67                                                  
+    68 00000058 01D8                                    add eax , ebx
+    69 0000005A A3[D9000000]                            mov [n] , eax
+    70                                                  
+    71                                              continue1:
+    72 0000005F EBD4                            jmp first_loop
+    73                                          out1:
+    74                                          
+    75                                          
+    76 00000061 8B0D[D9000000]                  mov ecx , [n]
+    77 00000067 BF[75000000]                    mov edi , Sir_nou
+    78                                          
+    79                                          loop2:
+    80 0000006C AC                                  lodsb ; al = [esi] , inc esi
+    81 0000006D 3C20                                cmp al , ' '
+    82 0000006F 7434                                    je space_
+    83 00000071 3C30                                cmp al , '0'
+    84 00000073 7C32                                    jl continue2
+    85 00000075 3C39                                cmp al , '9'
+    86 00000077 7C1B                                    jl add1
+    87 00000079 3C41                                cmp al , 'A'
+    88 0000007B 7C2A                                    jl continue2
+    89 0000007D 3C5A                                cmp al , 'Z'
+    90 0000007F 7F26                                    jg continue2
+    91                                              ;; esle
+    92                                              add2:
+    93 00000081 2C41                                    sub al , 'A'
+    94 00000083 040A                                    add al , 10
+    95 00000085 8A1F                                    mov bl , [edi]
+    96 00000087 80FBFF                                  cmp bl , -1
+    97 0000008A 7404                                        je prima_cfrA
+    98 0000008C 38C3                                    cmp bl , al
+    99 0000008E 7C17                                        jl continue2
+   100                                                  
+   101                                                  prima_cfrA:
+   102 00000090 8807                                        mov [edi] , al
+   103 00000092 EB13                                    jmp continue2
+   104                                                  
+   105                                              add1:
+   106 00000094 2C30                                    sub al , '0'
+   107 00000096 8A1F                                    mov bl , [edi]
+   108 00000098 80FBFF                                  cmp bl , -1
+   109 0000009B 7404                                        je prima_cfr0
+   110 0000009D 38C3                                    cmp bl , al
+   111 0000009F 7C06                                        jl continue2
+   112                                                  
+   113                                                  prima_cfr0:
+   114 000000A1 8807                                        mov [edi] , al
+   115 000000A3 EB02                                    jmp continue2
+   116                                              space_:
+   117 000000A5 47                                      inc edi
+   118 000000A6 49                                      dec ecx
+   119                                              continue2:
+   120 000000A7 E302                                jecxz out2
+   121 000000A9 EBC1                            jmp loop2
+   122                                          out2:
+   123                                          
+   124 000000AB FF35[D9000000]                  push dword [n]
+   125 000000B1 68[DE000000]                    push dword format
+   126 000000B6 FF15[00000000]                  call [printf]
+   127 000000BC 83C408                          add esp, 4*2 
+   128                                          
+   129 000000BF 68[E1000000]                    push dword new_line
+   130 000000C4 FF15[00000000]                  call [printf]
+   131 000000CA 83C404                          add esp , 4
+   132                                          
+   133                                          
+   134 000000CD 8B0D[D9000000]                  mov ecx , [n]
+   135 000000D3 BE[75000000]                    mov esi , Sir_nou
+   136                                          
+   137                                          afisare_loop:
+   138 000000D8 B800000000                          mov eax , 0 
+   139 000000DD AC                                  lodsb
+   140 000000DE 890D[E5000000]                      mov [aux] , ecx
+   141                                              
+   142 000000E4 50                                  push dword eax 
+   143 000000E5 68[DE000000]                        push dword format
+   144 000000EA FF15[00000000]                      call [printf]
+   145 000000F0 83C408                              add esp, 4*2
+   146                                              
+   147 000000F3 68[E3000000]                        push dword space
+   148 000000F8 FF15[00000000]                      call [printf]
+   149 000000FE 83C404                              add esp, 4*1
+   150                                              
+   151 00000101 8B0D[E5000000]                      mov ecx , [aux]
+   152 00000107 E2CF                            loop afisare_loop
+   153                                          
+   154                                          
+   155                                          ; exit(0)
+   156 00000109 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+   157 0000010B FF15[00000000]                  call    [exit]       ; call exit to terminate the program

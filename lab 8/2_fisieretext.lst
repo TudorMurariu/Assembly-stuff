@@ -1,0 +1,110 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit , fclose , fopen , printf ,fread ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  import fopen msvcrt.dll  
+    11                                  import fclose msvcrt.dll
+    12                                  import printf msvcrt.dll
+    13                                  import fread msvcrt.dll
+    14                                  
+    15                                  ; our data is declared here (the variables needed by our program)
+    16                                  segment data use32 class=data
+    17                                      ; ...
+    18 00000000 70726F626C656D6132-         nume_fisier db "problema2.txt", 0 ; numele fisierului care va fi creat
+    18 00000009 2E74787400         
+    19 0000000E 7200                        mod_acces db "r", 0                                            
+    20 00000010 FFFFFFFF                    descriptor_fis dd -1; aici vom salva descriptorul fisierului - necesar pt a putea face referire la fisier
+    21                                      len equ 100                                     
+    22 00000014 00<rept>                    text times (len+1) db 0 
+    23 00000079 4E756D6172756C2064-         format db "Numarul de consoane este : %d",0
+    23 00000082 6520636F6E736F616E-
+    23 0000008B 652065737465203A20-
+    23 00000094 256400             
+    24 00000097 00000000                    numar_consoane dd 0
+    25                                  
+    26                                  ; our code starts here
+    27                                  segment code use32 class=code
+    28                                      start:
+    29                                          ; ...
+    30 00000000 68[0E000000]                    push dword mod_acces     
+    31 00000005 68[00000000]                    push dword nume_fisier
+    32 0000000A FF15[00000000]                  call [fopen]   	; returneaza in EAX - descriptorul de fisier
+    33 00000010 83C408                          add esp, 4*2 
+    34                                          
+    35 00000013 A3[10000000]                    mov [descriptor_fis], eax
+    36                                          
+    37 00000018 FF35[10000000]                  push dword [descriptor_fis]
+    38 0000001E 6A64                            push dword len
+    39 00000020 6A01                            push dword 1
+    40 00000022 68[14000000]                    push dword text        
+    41 00000027 FF15[00000000]                  call [fread]
+    42 0000002D 83C410                          add esp, 4*4
+    43                                          
+    44 00000030 89C1                            mov ecx , eax
+    45 00000032 BE[14000000]                    mov esi , text
+    46                                          
+    47                                          repeta:
+    48 00000037 AC                                  LODSB    ; al = [esi] , inc esi
+    49                                              
+    50                                              ; Pentru litere mici
+    51 00000038 3C7A                                cmp al , 'z'
+    52 0000003A 7D1A                                    jge continue
+    53                                              ;elif
+    54 0000003C 3C61                                cmp al , 'a'
+    55 0000003E 7E16                                    jle continue
+    56                                              ;elif
+    57 00000040 3C65                                cmp al , 'e'
+    58 00000042 7412                                    je continue
+    59                                              ;elif 
+    60 00000044 3C69                                cmp al , 'i'
+    61 00000046 740E                                    je continue
+    62                                              ;elif 
+    63 00000048 3C6F                                cmp al , 'o'
+    64 0000004A 740A                                    je continue
+    65                                              ;elif 
+    66 0000004C 3C75                                cmp al , 'u'
+    67 0000004E 7406                                    je continue
+    68                                              ;else
+    69 00000050 FF05[97000000]                      inc dword[numar_consoane]
+    70                                              continue:
+    71                                              
+    72                                              ; Pentru litere mari
+    73 00000056 3C5A                                cmp al , 'Z'
+    74 00000058 7D1A                                    jge continue1
+    75                                              ;elif
+    76 0000005A 3C41                                cmp al , 'A'
+    77 0000005C 7E16                                    jle continue1
+    78                                              ;elif
+    79 0000005E 3C45                                cmp al , 'E'
+    80 00000060 7412                                    je continue1
+    81                                              ;elif 
+    82 00000062 3C49                                cmp al , 'I'
+    83 00000064 740E                                    je continue1
+    84                                              ;elif 
+    85 00000066 3C4F                                cmp al , 'O'
+    86 00000068 740A                                    je continue1
+    87                                              ;elif 
+    88 0000006A 3C55                                cmp al , 'U'
+    89 0000006C 7406                                    je continue1
+    90                                              ;else
+    91 0000006E FF05[97000000]                      inc dword[numar_consoane]
+    92                                              continue1:
+    93                                              
+    94 00000074 E2C1                            loop repeta
+    95                                          
+    96 00000076 FF35[97000000]                  push dword [numar_consoane]
+    97 0000007C 68[79000000]                    push dword format
+    98 00000081 FF15[00000000]                  call [printf]
+    99                                          
+   100 00000087 FF35[10000000]                  push dword [descriptor_fis]
+   101 0000008D FF15[00000000]                  call [fclose]
+   102 00000093 83C404                          add esp, 4
+   103                                      
+   104                                          ; exit(0)
+   105 00000096 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+   106 00000098 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

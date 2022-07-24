@@ -1,0 +1,102 @@
+     1                                  bits 32 
+     2                                  
+     3                                  global start        
+     4                                  
+     5                                  extern exit,scanf,fopen,fprintf,fclose,printf
+     6                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     7                                                     
+     8                                  import scanf msvcrt.dll
+     9                                  import fopen msvcrt.dll
+    10                                  import fprintf msvcrt.dll
+    11                                  import fclose msvcrt.dll
+    12                                  import printf msvcrt.dll
+    13                                                     
+    14                                  segment data use32 class=data
+    15                                      ; ...
+    16 00000000 6F75747075742E7478-         nume_fisier db "output.txt",0
+    16 00000009 7400               
+    17 0000000B FFFFFFFF                    descriptor_fis dd -1
+    18 0000000F 7700                        mod_acces db "w",0
+    19 00000011 <res 00000004>              x resd 1
+    20 00000015 0000000000000000            r dq 0
+    21 0000001D 256400                      format_citire db "%d",0
+    22 00000020 25642000                    format_afisare db "%d ",0
+    23 00000024 00000000                    maxim dd 0
+    24 00000028 A0860100                    minim dd 100000
+    25                                      
+    26                                  segment code use32 class=code
+    27                                      start:
+    28                                          ; ...
+    29                                          
+    30                                          ;deschidem fisierul
+    31                                          ;fopen(nume_fisier,mod_acces) RETURNEAZXA IN EAX descriptor_fis
+    32 00000000 68[0F000000]                    push dword mod_acces
+    33 00000005 68[00000000]                    push dword nume_fisier
+    34 0000000A FF15[00000000]                  call [fopen]
+    35 00000010 83C408                          add esp , 4*2
+    36                                          
+    37 00000013 83F800                          cmp eax , 0
+    38 00000016 0F849A000000                        je final
+    39                                              
+    40 0000001C A3[0B000000]                    mov [descriptor_fis] , eax
+    41                                          
+    42                                          loop1:
+    43 00000021 68[11000000]                        push dword x
+    44 00000026 68[1D000000]                        push dword format_citire
+    45 0000002B FF15[00000000]                      call [scanf]
+    46 00000031 83C408                              add esp , 4*2
+    47                                              
+    48 00000034 A1[11000000]                        mov eax , [x]
+    49 00000039 83F8FF                              cmp eax , -1
+    50 0000003C 7420                                    je afara
+    51                                              
+    52 0000003E 3B05[24000000]                      cmp eax , [maxim]
+    53 00000044 7F0A                                    jg schimb_max
+    54 00000046 3B05[28000000]                      cmp eax , [minim]
+    55 0000004C 7C09                                    jl schimb_min
+    56 0000004E EB0C                                jmp continua
+    57                                              schimb_max:
+    58 00000050 A3[24000000]                            mov [maxim] , eax
+    59 00000055 EB05                                    jmp continua
+    60                                              schimb_min:
+    61 00000057 A3[28000000]                            mov [minim] , eax
+    62                                                  
+    63                                              continua:
+    64 0000005C EBC3                            jmp loop1
+    65                                          afara:
+    66                                          
+    67                                          ;fprintf(descriptor_fis,format_afisare,maxim)
+    68 0000005E FF35[24000000]                  push dword [maxim]
+    69 00000064 68[20000000]                    push dword format_afisare
+    70 00000069 FF35[0B000000]                  push dword [descriptor_fis]
+    71 0000006F FF15[00000000]                  call [fprintf]
+    72 00000075 83C40C                          add esp , 4*3
+    73                                          
+    74                                          ;fprintf(descriptor_fis,format_afisare,minim)
+    75 00000078 FF35[28000000]                  push dword [minim]
+    76 0000007E 68[20000000]                    push dword format_afisare
+    77 00000083 FF35[0B000000]                  push dword [descriptor_fis]
+    78 00000089 FF15[00000000]                  call [fprintf]
+    79 0000008F 83C40C                          add esp , 4*3
+    80                                          
+    81 00000092 A1[24000000]                    mov eax , [maxim]
+    82 00000097 8B1D[28000000]                  mov ebx , [minim]
+    83                                          
+    84 0000009D F7EB                            imul ebx ; edx:eax = eax*ebx , r e de tip quad
+    85 0000009F A3[15000000]                    mov [r + 0] , eax
+    86 000000A4 8915[19000000]                  mov [r + 4] , edx
+    87                                          
+    88                                          ;push dword eax
+    89                                          ;push dword format_afisare
+    90                                          ;push dword [descriptor_fis]
+    91                                          ;call [fprintf]
+    92                                          ;add esp , 4*3
+    93                                          
+    94                                          ;fclose(descriptor_fis)
+    95 000000AA FF35[0B000000]                  push dword [descriptor_fis]
+    96 000000B0 FF15[00000000]                  call [fclose]
+    97                                          
+    98                                          final:
+    99                                          ; exit(0)
+   100 000000B6 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+   101 000000B8 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

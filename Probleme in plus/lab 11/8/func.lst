@@ -1,0 +1,27 @@
+     1                                  bits 32
+     2                                  global afis
+     3                                  extern printf
+     4                                  import printf msvcrt.dll
+     5                                  
+     6                                  segment data use32 class=data
+     7                                      ; ...
+     8 00000000 256F2000                    format8 db "%o ",0
+     9 00000004 25630A00                    formatC db "%c",10,0
+    10                                  
+    11                                  segment code use32 class=code
+    12                                      afis: 
+    13 00000000 8B442404                        mov eax , [esp + 4]
+    14                                          
+    15 00000004 50                              push dword eax
+    16 00000005 68[00000000]                    push dword format8
+    17 0000000A FF15[00000000]                  call [printf]
+    18 00000010 83C408                          add esp , 4*2
+    19                                          
+    20 00000013 8B442404                        mov eax , [esp + 4]
+    21                                          
+    22 00000017 50                              push dword eax
+    23 00000018 68[04000000]                    push dword formatC
+    24 0000001D FF15[00000000]                  call [printf]
+    25 00000023 83C408                          add esp , 4*2
+    26                                          
+    27 00000026 C3                              ret

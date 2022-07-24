@@ -1,0 +1,32 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                      ; ...
+    14 00000000 37                          a db 55
+    15 00000001 0F                          b db 15
+    16 00000002 28                          c db 40
+    17 00000003 14                          d db 20
+    18                                  
+    19                                  ; our code starts here
+    20                                  segment code use32 class=code
+    21                                      start:
+    22                                          ; ...  (b+c)+(a+b-d)
+    23 00000000 A0[01000000]                    mov al , [b] ; al = b
+    24 00000005 0205[02000000]                  add al , [c] ; al = b+c
+    25 0000000B 8A1D[00000000]                  mov bl , [a] ; bl = a
+    26 00000011 021D[01000000]                  add bl , [b] ; bl = a+b
+    27 00000017 2A1D[03000000]                  sub bl , [d] ; bl = a+b - d
+    28 0000001D 00D8                            add al , bl  ; al = al + bl
+    29                                          ;al = (15+40) + (55+15-20) = 55 + 50 = 105
+    30                                          ; exit(0)
+    31 0000001F 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    32 00000021 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

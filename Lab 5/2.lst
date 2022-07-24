@@ -1,0 +1,71 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit,printf              ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  import printf msvcrt.dll
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                      ; ...
+    14 00000000 2B3432614033242A            S db  '+', '4', '2', 'a', '@', '3', '$', '*'  ; declararea sirului S
+    15                                      ;      2B   34   32   61   40   33   24   2A   (in hexa)
+    16                                      lung equ $-S  ; stabilirea lungimea sirului initial
+    17 00000008 00<rept>                    D times lung db 0   ; rezervam spatiu pentru sirul D
+    18                                      
+    19                                  ; our code starts here
+    20                                  segment code use32 class=code
+    21                                      start:
+    22                                          ; ...
+    23 00000000 B908000000                      mov ecx , lung
+    24 00000005 BE00000000                      mov esi , 0 ; un fel de pointer pentru S
+    25 0000000A BF00000000                      mov edi , 0 ; un fel de pointer pentru D
+    26                                          
+    27                                          Repeta:
+    28 0000000F 8A86[00000000]                      mov al, [S + esi] 
+    29 00000015 3C30                                cmp al , '0'                ; daca al < '0' : adauga
+    30 00000017 7D09                                jge elif1    ; daca caracterul este mai mare sau egal decat '0'
+    31                                                           ; atunci mergem la umatorul pas
+    32                                              
+    33                                              adauga:      ; altfel il adaugam in D si iesim
+    34 00000019 8887[08000000]                      mov [D + edi], al
+    35 0000001F 47                                  inc edi
+    36 00000020 EB1E                                jmp Exit
+    37                                              
+    38                                              elif1:
+    39 00000022 3C39                                cmp al , '9'
+    40 00000024 7F02                                jg  elif2   ; daca este mai mare decat 9 il testam din nou
+    41 00000026 EB18                                jmp Exit    ; altfel iesim deoarece stim ca este un numar
+    42                                              
+    43                                              elif2:
+    44 00000028 3C41                                cmp al , 'A' 
+    45 0000002A 7D02                                jge elif3  ; daca este mai mare decat 'A' il testam din nou
+    46 0000002C EBEB                                jmp adauga ; altfel stim ca caracterul se afla intre  '9'+1 si 'A'-1 deci il adaugam
+    47                                              
+    48                                              elif3:
+    49 0000002E 3C5A                                cmp al , 'Z'
+    50 00000030 7F02                                jg elif4  ; daca este mai mare deact Z il testam din nou
+    51 00000032 EB0C                                jmp Exit  ; altfel iesim deoarece stim ca este o litera mare
+    52                                              
+    53                                              elif4:
+    54 00000034 3C61                                cmp al , 'a'
+    55 00000036 7D02                                jge elif5  ; daca este mai mare decat 'a' il testam din nou 
+    56 00000038 EBDF                                jmp adauga ; altfel stim ca caracterul se afla intre  'Z'+1 si 'a'-1 deci il adaugam
+    57                                              
+    58                                              elif5:
+    59 0000003A 3C7A                                cmp al , 'z'
+    60 0000003C 7E02                                jle Exit   ; daca este mai mic decat 'z' iesim
+    61 0000003E EBD9                                jmp adauga ; ltfel stim ca caracterul este mai mare decat 'z' deci il adaugam
+    62                                              
+    63                                              Exit:
+    64 00000040 46                                  inc esi
+    65 00000041 E2CC                            loop Repeta ; dec ecx
+    66                                          
+    67                                          ; D devine : '+', '@', '$', '*'
+    68                                          ;            2B   40   24   2A  (in hexa)
+    69                                          ; exit(0)
+    70 00000043 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    71 00000045 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

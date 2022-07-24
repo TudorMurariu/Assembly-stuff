@@ -1,0 +1,18 @@
+     1                                  bits 32
+     2                                  global comp
+     3                                  
+     4                                  segment code use32 class=code
+     5                                      comp:
+     6 00000000 8B442404                        mov eax , [esp+4]
+     7 00000004 8B5C2408                        mov ebx , [esp+8]
+     8                                          
+     9 00000008 39D8                            cmp eax , ebx
+    10 0000000A 7307                            jae x1
+    11 0000000C B800000000                      mov eax , 0
+    12 00000011 EB05                            jmp end1
+    13                                          
+    14                                          x1:
+    15 00000013 B801000000                      mov eax , 1
+    16                                          end1:
+    17                                          
+    18 00000018 C3                              ret

@@ -1,0 +1,62 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit, fclose, fopen, fprintf , fread , printf ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  import fopen msvcrt.dll  
+    11                                  import fclose msvcrt.dll
+    12                                  import fprintf msvcrt.dll
+    13                                  import printf msvcrt.dll
+    14                                  import fread msvcrt.dll
+    15                                  
+    16                                  ; our data is declared here (the variables needed by our program)
+    17                                  segment data use32 class=data
+    18                                      ; ...
+    19 00000000 746573742E74787400          nume_fisier db "test.txt", 0 ; numele fisierului care va fi creat
+    20 00000009 612B00                      mod_acces db "a+", 0                                            
+    21 0000000C FFFFFFFF                    descriptor_fis dd -1; aici vom salva descriptorul fisierului - necesar pt a putea face referire la fisier
+    22                                      len equ 100                                     
+    23 00000010 00<rept>                    text times (len+1) db 0 
+    24 00000075 416D20636974697420-         format db "Am citit %d caractere din fisier. Textul este: %s",0
+    24 0000007E 256420636172616374-
+    24 00000087 6572652064696E2066-
+    24 00000090 69736965722E205465-
+    24 00000099 7874756C2065737465-
+    24 000000A2 3A20257300         
+    25                                  ; our code starts here
+    26                                  segment code use32 class=code
+    27                                      start:
+    28                                          ; ...
+    29                                         
+    30                                          
+    31 00000000 68[09000000]                    push dword mod_acces     
+    32 00000005 68[00000000]                    push dword nume_fisier
+    33 0000000A FF15[00000000]                  call [fopen]   	; returneaza in EAX - descriptorul de fisier
+    34 00000010 83C408                          add esp, 4*2       
+    35                                          
+    36 00000013 A3[0C000000]                    mov [descriptor_fis], eax
+    37                                          
+    38 00000018 FF35[0C000000]                  push dword [descriptor_fis]
+    39 0000001E 6A64                            push dword len
+    40 00000020 6A01                            push dword 1
+    41 00000022 68[10000000]                    push dword text        
+    42 00000027 FF15[00000000]                  call [fread]
+    43 0000002D 83C410                          add esp, 4*4
+    44                                  
+    45 00000030 68[10000000]                    push dword text
+    46 00000035 50                              push dword eax
+    47                                          
+    48 00000036 68[75000000]                    push dword format
+    49 0000003B FF15[00000000]                  call [printf]
+    50                                          
+    51 00000041 FF35[0C000000]                  push dword [descriptor_fis]
+    52 00000047 FF15[00000000]                  call [fclose]
+    53 0000004D 83C404                          add esp, 4
+    54                                  
+    55                                          ; exit(0)
+    56 00000050 6A00                            push    dword 0      ; push the parameter for exit onto the stack    
+    57 00000052 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

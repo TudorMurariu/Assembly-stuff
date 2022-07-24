@@ -1,0 +1,37 @@
+     1                                  bits 32
+     2                                  global _concat
+     3                                  segment data public data use32
+     4                                  segment code public code use32
+     5                                      _concat:
+     6 00000000 8B742408                        mov esi , [esp+8]
+     7 00000004 8B7C240C                        mov edi , [esp+12]
+     8                                          loop1:
+     9 00000008 AC                                  lodsb ; al = [edi] , inc edi
+    10 00000009 3C00                                cmp al , 0
+    11 0000000B 740B                                    je out1
+    12 0000000D 3C30                                cmp al , '0'
+    13 0000000F 7C05                                    jl continue1
+    14 00000011 3C39                                cmp al , '9'
+    15 00000013 7F01                                    jg continue1
+    16 00000015 AA                                  stosb ; [esi] = al , inc esi
+    17                                              
+    18                                              continue1:
+    19 00000016 EBF0                            jmp loop1
+    20                                          out1:
+    21                                          
+    22 00000018 8B742404                        mov esi , [esp+4]
+    23                                          loop2:
+    24 0000001C AC                                  lodsb ; al = [edi] , inc edi
+    25 0000001D 3C00                                cmp al , 0
+    26 0000001F 740B                                    je out2
+    27 00000021 3C30                                cmp al , '0'
+    28 00000023 7C05                                    jl continue2
+    29 00000025 3C39                                cmp al , '9'
+    30 00000027 7F01                                    jg continue2
+    31 00000029 AA                                  stosb ; [esi] = al , inc esi
+    32                                              
+    33                                              continue2:
+    34 0000002A EBF0                            jmp loop2
+    35                                          out2:
+    36                                          
+    37 0000002C C3                              ret 

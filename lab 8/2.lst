@@ -1,0 +1,82 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit, printf, scanf               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  import printf msvcrt.dll
+    11                                  import scanf msvcrt.dll
+    12                                  ;Sa se citeasca de la tastatura doua numere a si b (in baza 10) si sa se calculeze a/b. Catul impartirii se va ;salva in memorie in variabila "rezultat" (definita in segmentul de date). Valorile se considera cu semn
+    13                                  ; our data is declared here (the variables needed by our program)
+    14                                  segment data use32 class=data
+    15                                      ; ...
+    16 00000000 20726573742000              mesaj db " rest ",0
+    17 00000007 256400                      format db "%d",0
+    18 0000000A 00000000                    a dd 0
+    19 0000000E 00000000                    b dd 0
+    20 00000012 00                          reazultat db 0
+    21                                  ; our code starts here
+    22                                  segment code use32 class=code
+    23                                      start:
+    24                                          ; ...
+    25                                          
+    26                                          ; Citim cele doua numere
+    27                                          ; scanf("$d",a)
+    28 00000000 68[0A000000]                    push dword a
+    29 00000005 68[07000000]                    push dword format
+    30 0000000A FF15[00000000]                  call [scanf]
+    31 00000010 83C408                          add esp, 4 * 2 
+    32                                          
+    33                                          ; scanf("$d",b)
+    34 00000013 68[0E000000]                    push dword b
+    35 00000018 68[07000000]                    push dword format
+    36 0000001D FF15[00000000]                  call [scanf]
+    37 00000023 83C408                          add esp, 4 * 2 
+    38                                          
+    39                                          ; mutam in dx:ax pe a
+    40 00000026 BA00000000                      mov edx , 0
+    41 0000002B FF35[0A000000]                  push dword[a]
+    42 00000031 6658                            pop ax
+    43 00000033 665A                            pop dx
+    44                                          
+    45                                          ; facem impartirea
+    46 00000035 668B1D[0E000000]                mov bx , [b]
+    47 0000003C 66F7FB                          idiv bx ; ax = dx:ax / bx
+    48 0000003F 98                              cwde     ; eax = ax
+    49 00000040 A3[12000000]                    mov dword [reazultat] , eax ; rezultat = catul impartirii
+    50 00000045 89D3                            mov ebx , edx
+    51                                          
+    52                                          ; printf("%d",eax)
+    53                                          ; afisam catul
+    54 00000047 FF35[12000000]                  push dword [reazultat]
+    55 0000004D 68[07000000]                    push dword format
+    56 00000052 FF15[00000000]                  call [printf]
+    57 00000058 83C408                          add esp, 4 * 2 
+    58                                          
+    59                                          
+    60                                          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    61                                          ; afisam " rest " in consola
+    62                                          ;push dword mesaj
+    63                                          ;call [printf]
+    64                                          ;add esp, 4
+    65                                          
+    66                                          ; afisam restul in consola
+    67                                          ;mov edx , ebx
+    68                                          ;cmp edx , [b] ; restul nu poate fi mai mare deact catul
+    69                                          ;jng else
+    70                                              ;sub edx , 65536 ; = 2^16
+    71                                              ;neg edx
+    72                                          
+    73                                          ;else:
+    74                                          ; printf("%d",edx)
+    75                                          ;push dword edx
+    76                                          ;push dword format
+    77                                          ;call [printf]
+    78                                          ;add esp, 4 * 2 
+    79                                          
+    80                                          ; exit(0)
+    81 0000005B 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    82 0000005D FF15[00000000]                  call    [exit]       ; call exit to terminate the program

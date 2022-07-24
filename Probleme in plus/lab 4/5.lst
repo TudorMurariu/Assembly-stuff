@@ -1,0 +1,74 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit, scanf, printf               
+     8                                  import exit msvcrt.dll    
+     9                                  
+    10                                  import scanf msvcrt.dll
+    11                                  import printf msvcrt.dll
+    12                                  
+    13                                  ; our data is declared here (the variables needed by our program)
+    14                                  segment data use32 class=data
+    15                                      ; ...
+    16 00000000 15                          a db 010101b
+    17 00000001 1D                          b db 011101b
+    18 00000002 00000000                    c dd 0
+    19 00000006 25780A00                    format db "%x",10,0
+    20                                      
+    21                                  ; our code starts here
+    22                                  segment code use32 class=code
+    23                                      start:
+    24                                          ; ...
+    25 00000000 A1[02000000]                    mov eax , [c]
+    26 00000005 0D0000FFFF                      or eax , 0FFFF0000h
+    27                                          
+    28 0000000A 66BB0000                        mov bx , 0
+    29 0000000E 8A1D[01000000]                  mov bl , [b]
+    30 00000014 80E378                          and bl , 01111000b
+    31 00000017 66C1EB03                        shr bx , 3
+    32 0000001B 2400                            and al , 0h
+    33 0000001D 08D8                            or al , bl
+    34                                          
+    35 0000001F A3[02000000]                    mov [c] , eax
+    36                                          
+    37 00000024 FF35[02000000]                  push dword [c]
+    38 0000002A 68[06000000]                    push dword format
+    39 0000002F FF15[00000000]                  call [printf]
+    40 00000035 83C408                          add esp , 4*2
+    41                                          
+    42 00000038 A1[02000000]                    mov eax , [c]
+    43 0000003D 660D0006                        or ax , 011000000000b
+    44                                          
+    45 00000041 BB00000000                      mov ebx , 0
+    46 00000046 8A1D[00000000]                  mov bl , [a]
+    47 0000004C 80E31F                          and bl , 011111b
+    48 0000004F C1E30B                          shl ebx , 11
+    49 00000052 09D8                            or eax , ebx
+    50                                          
+    51 00000054 A3[02000000]                    mov [c] , eax
+    52                                          
+    53 00000059 FF35[02000000]                  push dword [c]
+    54 0000005F 68[06000000]                    push dword format
+    55 00000064 FF15[00000000]                  call [printf]
+    56 0000006A 83C408                          add esp , 4*2
+    57                                          
+    58 0000006D BB00000000                      mov ebx , 0
+    59 00000072 8A1D[00000000]                  mov bl , [a]
+    60 00000078 53                              push dword ebx
+    61 00000079 68[06000000]                    push dword format
+    62 0000007E FF15[00000000]                  call [printf]
+    63 00000084 83C408                          add esp , 4*2
+    64                                  
+    65 00000087 BB00000000                      mov ebx , 0
+    66 0000008C 8A1D[01000000]                  mov bl , [b]
+    67 00000092 53                              push dword ebx
+    68 00000093 68[06000000]                    push dword format
+    69 00000098 FF15[00000000]                  call [printf]
+    70 0000009E 83C408                          add esp , 4*2
+    71                                          
+    72                                          ; exit(0)
+    73 000000A1 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    74 000000A3 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

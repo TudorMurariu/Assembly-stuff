@@ -1,0 +1,147 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                                            
+    12                                   
+    13                                  ; Enunt : 
+    14                                  ;Se da un sir de cuvinte. Sa se obtina din acesta un sir de dublucuvinte, in care fiecare dublucuvant va ;contine nibble-urile despachetate pe octet (fiecare cifra hexa va fi precedata de un 0), aranjate crescator i
+    15                                  
+    16                                                        
+    17                                  ; our data is declared here (the variables needed by our program)
+    18                                  segment data use32 class=data
+    19                                      ; ...
+    20 00000000 00<rept>                    aux times 4 db 0
+    21 00000004 32147586BCAD1105            S dw 1432h, 8675h, 0ADBCh, 0511h
+    22                                      S_len equ ($-S)/2 ; S_len = lungimea sirului S in cuvinte
+    23 0000000C 00000000<rept>              new_S times S_len dd 0 ; rezervam memorie
+    24 0000001C <res 00000001>              i resb 1
+    25 0000001D 01                          ok db 1
+    26                                      
+    27                                  ; our code starts here
+    28                                  segment code use32 class=code
+    29                                      start:
+    30                                          ; ...
+    31 00000000 B904000000                      mov ecx , S_len
+    32 00000005 BE[04000000]                    mov esi , S     ; un fel de pointer pt S
+    33 0000000A BF[0C000000]                    mov edi , new_S ; un fel de pointer pt new_S       
+    34                                          
+    35                                          
+    36                                          Repeta:
+    37 0000000F 83F900                              cmp ecx , 0
+    38 00000012 0F84CB000000                        jz sfarfit
+    39                                              
+    40 00000018 B800000000                          mov eax , 0
+    41 0000001D 66AD                                LODSW   ; mov ax , [esi]    ,   add esi , 2                                 
+    42                                              
+    43                                              
+    44                                              ; cream un sir cu toate cifrele din hexa ale numarului din ax
+    45                                              ; pentru a le putea sorta mai tarziu
+    46                                              
+    47 0000001F 51                                  push ecx
+    48 00000020 56                                  push esi
+    49 00000021 B904000000                          mov ecx , 4
+    50 00000026 BE[00000000]                        mov esi , aux
+    51                                              repeta_creare_vector:  
+    52 0000002B 6689C3                                  mov bx , ax     ; nu am folosit lods fiindca avem nevoie de ax
+    53 0000002E 6683E30F                                and bx , 0Fh
+    54 00000032 881E                                    mov [esi] , bl
+    55 00000034 66C1E804                                shr ax , 4  ; 4 cifre in b = o cifra in hexa
+    56 00000038 46                                      inc esi   ; esi++
+    57 00000039 E2F0                                loop repeta_creare_vector
+    58 0000003B 5E                                  pop esi
+    59 0000003C 59                                  pop ecx
+    60                                              
+    61                                              
+    62                                              
+    63                                              ;;;;;;;;; sortare 
+    64 0000003D 51                                  push ecx
+    65 0000003E 56                                  push esi
+    66 0000003F C605[1D000000]01                    mov byte[ok] , 1
+    67                                              repeta_sortare:
+    68 00000046 803D[1D000000]00                        cmp byte[ok] , 0
+    69 0000004D 742E                                    jz afara
+    70                                                  
+    71 0000004F C605[1D000000]00                        mov  byte[ok] , 0
+    72 00000056 BE[00000000]                            mov esi , aux
+    73 0000005B B903000000                              mov ecx , 3   ; sirul are 4 numere 
+    74                                                  Repeta_sir:
+    75 00000060 8A06                                        mov al , [esi]     
+    76 00000062 3A4601                                      cmp al , [esi + 1] 
+    77 00000065 7F02                                        jg swap 
+    78 00000067 EB0F                                        jmp altfel
+    79                                                      
+    80                                                      swap:
+    81 00000069 8A5E01                                          mov bl , [esi + 1]
+    82 0000006C 881E                                            mov [esi] , bl 
+    83 0000006E 884601                                          mov [esi + 1] , al
+    84 00000071 C605[1D000000]01                                mov  byte[ok] , 1
+    85                                                      
+    86                                                      altfel:
+    87 00000078 46                                          inc esi
+    88 00000079 E2E5                                    loop Repeta_sir
+    89                                                  
+    90 0000007B EBC9                                jmp repeta_sortare
+    91                                              
+    92                                              afara:        
+    93 0000007D 5E                                  pop esi
+    94 0000007E 59                                  pop ecx
+    95                                              
+    96                                              ;;;;; aducem din sir in ax numerele
+    97 0000007F 51                                  push ecx
+    98 00000080 56                                  push esi
+    99 00000081 B904000000                          mov ecx , 4
+   100 00000086 66BB0000                            mov bx , 0
+   101 0000008A 66B80000                            mov ax , 0
+   102 0000008E BE[00000000]                        mov esi , aux
+   103                                              repeta_numar_nou:
+   104 00000093 66C1E304                                shl bx , 4
+   105 00000097 AC                                      LODSB  ; al = [esi]   , esi++                     
+   106 00000098 6609C3                                  or bx , ax
+   107 0000009B E2F6                                loop repeta_numar_nou
+   108                                              
+   109 0000009D 6689D8                              mov ax , bx
+   110 000000A0 5E                                  pop esi
+   111 000000A1 59                                  pop ecx
+   112                                              
+   113                                              
+   114                                              ;;;;;;;; adaugam element in sirul new_S dupa cerinta    
+   115                                              
+   116 000000A2 6689C3                              mov bx , ax
+   117 000000A5 B800000000                          mov eax , 0 ; clear eax
+   118                                              
+   119 000000AA 51                                  push ecx
+   120 000000AB B904000000                          mov ecx , 4
+   121 000000B0 C605[1C000000]00                    mov byte[i] , 0
+   122                                              
+   123                                              Repeta1:
+   124 000000B7 BA00000000                              mov edx , 0 ; clear edx
+   125 000000BC 6689DA                                  mov dx , bx ; dx = bx 
+   126 000000BF 6683E20F                                and dx , 0Fh; extragem ultimii 4 biti din bx
+   127                                                  
+   128 000000C3 51                                      push ecx
+   129 000000C4 8A0D[1C000000]                          mov cl , [i]
+   130 000000CA D3E2                                    shl edx , cl
+   131 000000CC 59                                      pop ecx
+   132 000000CD 09D0                                    or eax , edx
+   133                                                   
+   134 000000CF 66C1EB04                                shr bx , 4
+   135 000000D3 8005[1C000000]08                        add byte[i] , 8
+   136 000000DA E2DB                                loop Repeta1
+   137                                              
+   138 000000DC AB                                  STOSD ; mov edi , eax   ,  add edi , 4
+   139 000000DD 59                                  pop ecx
+   140                                              
+   141 000000DE E92CFFFFFF                      jmp Repeta
+   142                                          
+   143                                          sfarfit:
+   144                                          
+   145                                          ; exit(0)
+   146 000000E3 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+   147 000000E5 FF15[00000000]                  call    [exit]       ; call exit to terminate the program
